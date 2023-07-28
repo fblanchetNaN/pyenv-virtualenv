@@ -40,6 +40,12 @@ From inside that directory you can:
     $ git clone https://github.com/pyenv/pyenv-virtualenv.git (pyenv root)/plugins/pyenv-virtualenv
     ```
 
+    For the Microsoft PowerShell:
+
+    ```sh
+    $ git clone https://github.com/pyenv/pyenv-virtualenv.git "$(pyenv root)/plugins/pyenv-virtualenv"
+    ```
+
 2. (OPTIONAL) **Add `pyenv virtualenv-init` to your shell** to enable auto-activation of virtualenvs. This is entirely optional but pretty useful. See "Activate virtualenv" below.
 
     ```sh
@@ -53,6 +59,12 @@ From inside that directory you can:
     ```
 
     **Zsh note**: Modify your `~/.zshrc` file instead of `~/.bashrc`.
+
+    **PowerShell note**:
+
+    ```pwsh
+    $ echo 'iex ((pyenv virtualenv-init -) -join "`n")' >> $profile.CurrentUserAllHosts
+    ```
     
 3. **Restart your shell to enable pyenv-virtualenv**
 
