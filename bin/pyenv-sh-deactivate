@@ -90,6 +90,12 @@ if [ -d "${prefix}/conda-meta" ] ||
   fish )
     : # conda doesn't support fish
     ;;
+  pwsh )
+    for script in "${prefix}/etc/conda/deactivate.d"/*.sh; do
+      echo ". \"${script}\";"
+    done
+    echo "\$Env:CONDA_PREFIX=\$null"
+    ;;
   * )
     for script in "${prefix}/etc/conda/deactivate.d"/*.sh; do
       echo ". \"${script}\";"
@@ -110,6 +116,12 @@ set -e PYENV_VERSION;
 set -e PYENV_ACTIVATE_SHELL;
 EOS
     ;;
+  pwsh )
+    cat <<EOS
+\$Env:PYENV_VERSION=\$null;
+\$Env:PYENV_ACTIVATE_SHELL=\$null;
+EOS
+    ;;
   * )
     cat <<EOS
 unset PYENV_VERSION;
@@ -127,6 +139,12 @@ set -e PYENV_VIRTUAL_ENV;
 set -e VIRTUAL_ENV;
 EOS
   ;;
+pwsh )
+  cat <<EOS
+\$Env:PYENV_VIRTUAL_ENV=\$null;
+\$Env:VIRTUAL_ENV=\$null;
+EOS
+  ;;
 * )
   cat <<EOS
 unset PYENV_VIRTUAL_ENV;
@@ -141,6 +159,9 @@ if [ -n "${CONDA_DEFAULT_ENV}" ]; then
   fish )
     echo "set -e CONDA_DEFAULT_ENV;"
     ;;
+  pwsh )
+    echo "\$Env:CONDA_DEFAULT_ENV=\$null;"
+    ;;
   * )
     echo "unset CONDA_DEFAULT_ENV;"
     ;;
@@ -154,6 +175,14 @@ if [ -n "\$_OLD_VIRTUAL_PATH" ];
   set -gx PATH "\$_OLD_VIRTUAL_PATH";
   set -e _OLD_VIRTUAL_PATH;
 end;
+EOS
+  ;;
+pwsh )
+  cat <<EOS
+if ( -not \$null -eq \$Env:_OLD_VIRTUAL_PATH ) {
+  \$Env:Path=\$Env:_OLD_VIRTUAL_PATH;
+  \$Env:_OLD_VIRTUAL_PATH=\$null;
+};
 EOS
   ;;
 * )
@@ -175,6 +204,14 @@ if [ -n "\$_OLD_VIRTUAL_PYTHONHOME" ];
 end;
 EOS
   ;;
+pwsh )
+  cat <<EOS
+if ( -not \$null -eq \$Env:_OLD_VIRTUAL_PYTHONHOME ) {
+  \$Env:PYTHONHOME=\$Env:_OLD_VIRTUAL_PYTHONHOME;
+  \$Env:_OLD_VIRTUAL_PYTHONHOME=\$null;
+};
+EOS
+  ;;
 * )
   cat <<EOS
 if [ -n "\${_OLD_VIRTUAL_PYTHONHOME:-}" ]; then
@@ -188,6 +225,14 @@ esac
 case "${shell}" in
 fish )
   :
+  ;;
+pwsh )
+  cat <<EOS
+if ( Get-Item function:_OLD_VIRTUAL_PS1 -ErrorAction SilentlyContinue ) {
+  Copy-Item -Path function:_OLD_VIRTUAL_PS1 -Destination function:prompt
+  Remove-Item -Path function:_OLD_VIRTUAL_PS1;
+};
+EOS
   ;;
 * )
   cat <<EOS
@@ -205,6 +250,13 @@ fish )
 if functions -q deactivate;
   functions -e deactivate;
 end;
+EOS
+  ;;
+pwsh )
+  cat <<EOS
+if ( Get-Item function:deactivate -ErrorAction SilentlyContinue ) {
+  Remove-Item -Path function:deactivate;
+};
 EOS
   ;;
 * )

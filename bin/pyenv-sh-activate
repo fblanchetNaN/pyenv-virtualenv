@@ -177,6 +177,12 @@ set -gx PYENV_VERSION "${versions[*]}";
 set -gx PYENV_ACTIVATE_SHELL 1;
 EOS
     ;;
+  pwsh )
+    cat <<EOS
+\$Env:PYENV_VERSION="${versions[*]}";
+\$Env:PYENV_ACTIVATE_SHELL=1;
+EOS
+    ;;
   * )
     cat <<EOS
 export PYENV_VERSION="${versions[*]}";
@@ -193,6 +199,12 @@ fish )
   cat <<EOS
 set -gx PYENV_VIRTUAL_ENV "${prefix}";
 set -gx VIRTUAL_ENV "${prefix}";
+EOS
+  ;;
+pwsh )
+  cat <<EOS
+\$Env:PYENV_VIRTUAL_ENV="${prefix}";
+\$Env:VIRTUAL_ENV="${prefix}";
 EOS
   ;;
 * )
@@ -215,6 +227,9 @@ if [ -d "${prefix}/conda-meta" ] ||
   fish )
     echo "set -gx CONDA_DEFAULT_ENV \"${CONDA_DEFAULT_ENV}\";"
     ;;
+  pwsh )
+    echo "\$Env:CONDA_DEFAULT_ENV=\"${CONDA_DEFAULT_ENV}\";"
+    ;;
   * )
     echo "export CONDA_DEFAULT_ENV=\"${CONDA_DEFAULT_ENV}\";"
     ;;
@@ -227,6 +242,12 @@ if [ -n "${PYTHONHOME}" ]; then
     cat <<EOS
 set -gx _OLD_VIRTUAL_PYTHONHOME "${PYTHONHOME}";
 set -e PYTHONHOME;
+EOS
+    ;;
+  pwsh )
+    cat <<EOS
+\$Env:_OLD_VIRTUAL_PYTHONHOME="${PYTHONHOME}";
+\$Env:PYTHONHOME=\$null;
 EOS
     ;;
   * )
@@ -248,6 +269,16 @@ if [ -z "${PYENV_VIRTUALENV_DISABLE_PROMPT}" ]; then
       echo "pyenv-virtualenv: prompt changing not working for fish." 1>&2
     fi
     ;;
+  pwsh )
+    cat <<EOS
+function global:_OLD_VIRTUAL_PS1 { "" }
+Copy-Item -Path function:prompt -Destination function:_OLD_VIRTUAL_PS1
+function global:prompt {
+    Write-Host -NoNewline -ForegroundColor Green "(${venv}) "
+    _OLD_VIRTUAL_PS1
+}
+EOS
+    ;;
   * )
     cat <<EOS
 export _OLD_VIRTUAL_PS1="\${PS1:-}";
@@ -266,6 +297,17 @@ if [ -d "${prefix}/conda-meta" ] ||
     # conda 4.4 and above
     for script in "${prefix}/etc/fish/conf.d"/*.fish; do
       echo "source \"${script}\";"
+    done
+    ;;
+  pwsh )
+    CONDA_PREFIX="$prefix"
+    echo "\$Env:CONDA_PREFIX=\"${CONDA_PREFIX}\";"
+    for script in "${prefix}/etc/conda/activate.d"/*.sh; do
+      echo ". \"${script}\";"
+    done
+    # conda 4.4 and above
+    for script in "${prefix}/etc/profile.d"/*.sh; do
+      echo ". \"${script}\";"
     done
     ;;
   * )

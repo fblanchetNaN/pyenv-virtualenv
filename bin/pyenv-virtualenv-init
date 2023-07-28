@@ -53,6 +53,9 @@ if [ -z "$print" ]; then
   bash )
     profile='~/.bashrc'
     ;;
+  pwsh )
+    profile='~/.config/powershell/profile.ps1'
+    ;;
   zsh )
     profile='~/.zshrc'
     ;;
@@ -74,6 +77,9 @@ if [ -z "$print" ]; then
     fish )
       echo 'status --is-interactive; and source (pyenv virtualenv-init -|psub)'
       ;;
+    pwsh )
+      echo 'iex ((pyenv virtualenv-init -) -join "`n")'
+      ;;
     * )
       echo 'eval "$(pyenv virtualenv-init -)"'
       ;;
@@ -91,6 +97,12 @@ while set index (contains -i -- "${PYENV_VIRTUALENV_ROOT:-${PYENV_VIRTUALENV_INS
 set -eg PATH[\$index]; end; set -e index
 set -gx PATH '${PYENV_VIRTUALENV_ROOT:-${PYENV_VIRTUALENV_INSTALL_PREFIX}}/shims' \$PATH;
 set -gx PYENV_VIRTUALENV_INIT 1;
+EOS
+  ;;
+pwsh )
+  cat <<EOS
+\$Env:PATH="${PYENV_VIRTUALENV_ROOT:-${PYENV_VIRTUALENV_INSTALL_PREFIX}}/shims:\${Env:PATH}";
+\$Env:PYENV_VIRTUALENV_INIT=1;
 EOS
   ;;
 * )
@@ -120,6 +132,16 @@ ksh )
 function _pyenv_virtualenv_hook() {
 EOS
   ;;
+pwsh )
+  cat <<EOS
+function _pyenv_virtualenv_hook {
+  pyenv activate
+  if ( \$LASTEXITCODE ) { 
+    pyenv deactivate
+  }
+};
+EOS
+  ;;
 * )
   cat <<EOS
 _pyenv_virtualenv_hook() {
@@ -128,6 +150,7 @@ EOS
 esac
 
 if [[ "$shell" != "fish" ]]; then
+  if [[ "$shell" != "pwsh" ]]; then
   cat <<EOS
   local ret=\$?
   if [ -n "\${VIRTUAL_ENV-}" ]; then
@@ -138,6 +161,7 @@ if [[ "$shell" != "fish" ]]; then
   return \$ret
 };
 EOS
+  fi
 
   case "$shell" in
   bash )
@@ -145,6 +169,17 @@ EOS
 if ! [[ "\${PROMPT_COMMAND-}" =~ _pyenv_virtualenv_hook ]]; then
   PROMPT_COMMAND="_pyenv_virtualenv_hook;\${PROMPT_COMMAND-}"
 fi
+EOS
+    ;;
+  pwsh )
+    cat <<EOS
+function _PROMPT { "" }
+Copy-Item -Path function:prompt -Destination function:_PROMPT
+
+function global:prompt {
+    _pyenv_virtualenv_hook
+    _PROMPT
+}
 EOS
     ;;
   zsh )
